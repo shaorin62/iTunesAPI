@@ -15,7 +15,15 @@ import com.smtown.itunes.itunesapi.api.response.feedgenerator.Feed;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+
+import org.json.simple.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+
 
 @Controller
 public class apiController {
@@ -28,22 +36,52 @@ public class apiController {
     }
 
     @RequestMapping("/search")
-    public String search(){
+    public String search(Model model){
 
-        Response searchResponse = new Search("cbs radio")
-                .setCountry(Country.CANADA)
-                .setAttribute(Attribute.AUTHOR_TERM)
+        List<Map<String, String>> resultList = new ArrayList<>(); //결과 정보 List
+
+
+        Response jsonResponse = new Search("방탄소년단")
+                .setCountry(Country.SOUTH_KOREA)
                 .setMedia(Media.MUSIC)
-                .setLimit(1)
+                .setEntity(Entity.MUSIC_TRACK)
+                .setLimit(2)
                 .execute();
 
-        System.out.println("search ==>" + searchResponse);
+        for(int i = 0; i < jsonResponse.getResultCount(); i++) {
+/*
+            System.out.println("search ==>"  + jsonResponse.getResults().get(0));
+            System.out.println("search2 ==>"  + jsonResponse.getResults().get(1));*/
 
-        System.out.println("search ==>" + searchResponse);
+            Map<String,String> map = new HashMap<>();
 
-        String returnvalue1 = searchResponse.toString();
+            map.put("artistName",jsonResponse.getResults().get(i).getArtistName());                 //아티스트 이름
+            map.put("collectionName",jsonResponse.getResults().get(i).getCollectionName());         //앨범이름
+            map.put("trackName",jsonResponse.getResults().get(i).getTrackName());                   //음악이름
+            map.put("artistViewUrl",jsonResponse.getResults().get(i).getArtistViewUrl());           //아이튠스내 아티스트소개
+            map.put("collectionViewUrl",jsonResponse.getResults().get(i).getCollectionViewUrl());   //아이튠스내 앨범소개 url
+            map.put("artworkUrl30",jsonResponse.getResults().get(i).getArtworkUrl30());             //앨범사진 30*30
+            map.put("previewUrl",jsonResponse.getResults().get(i).getPreviewUrl());                 //아이튠즈 미리듣기 url
 
-        return returnvalue1;
+            resultList.add(i,map);
+
+
+         /* model.addAttribute("artistName",jsonResponse.getResults().get(i).getArtistName());                  //아티스트 이름
+            model.addAttribute("collectionName",jsonResponse.getResults().get(i).getCollectionName());          //앨범이름
+            model.addAttribute("trackName",jsonResponse.getResults().get(i).getTrackName());                    //음악이름
+            model.addAttribute("artistViewUrl",jsonResponse.getResults().get(i).getArtistViewUrl());            //아이튠스내 아티스트소개
+            model.addAttribute("collectionViewUrl",jsonResponse.getResults().get(i).getCollectionViewUrl());    //아이튠스내 앨범소개 url
+            model.addAttribute("artworkUrl30",jsonResponse.getResults().get(i).getArtworkUrl30());              //앨범사진 30*30
+            model.addAttribute("previewUrl",jsonResponse.getResults().get(i).getPreviewUrl());                  //아이튠즈 미리듣기 url*/
+
+        }
+        System.out.println(resultList.get(0));
+        System.out.println(resultList.get(1));
+        System.out.println(resultList);
+
+        model.addAttribute("resultList" , resultList);
+
+        return "search/search";
     }
 
     @RequestMapping("/lookup")
