@@ -12,8 +12,10 @@ import com.smtown.itunes.itunesapi.api.request.search.Media;
 import com.smtown.itunes.itunesapi.api.response.Response;
 
 import com.smtown.itunes.itunesapi.api.response.feedgenerator.Feed;
+import com.smtown.itunes.itunesapi.api.response.genreidsappendix.GenreIdsResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import org.json.simple.JSONObject;
@@ -22,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 
 
 @Controller
@@ -40,12 +41,11 @@ public class apiController {
 
         List<Map<String, String>> resultList = new ArrayList<>(); //결과 정보 List
 
-
-        Response jsonResponse = new Search("방탄소년단")
+        Response jsonResponse = new Search("NCT")
                 .setCountry(Country.SOUTH_KOREA)
                 .setMedia(Media.MUSIC)
                 .setEntity(Entity.MUSIC_TRACK)
-                .setLimit(2)
+                .setLimit(10)
                 .execute();
 
         for(int i = 0; i < jsonResponse.getResultCount(); i++) {
@@ -60,27 +60,13 @@ public class apiController {
             map.put("trackName",jsonResponse.getResults().get(i).getTrackName());                   //음악이름
             map.put("artistViewUrl",jsonResponse.getResults().get(i).getArtistViewUrl());           //아이튠스내 아티스트소개
             map.put("collectionViewUrl",jsonResponse.getResults().get(i).getCollectionViewUrl());   //아이튠스내 앨범소개 url
-            map.put("artworkUrl30",jsonResponse.getResults().get(i).getArtworkUrl30());             //앨범사진 30*30
+            map.put("artworkUrl60",jsonResponse.getResults().get(i).getArtworkUrl60());             //앨범사진 30*30
             map.put("previewUrl",jsonResponse.getResults().get(i).getPreviewUrl());                 //아이튠즈 미리듣기 url
 
             resultList.add(i,map);
-
-
-         /* model.addAttribute("artistName",jsonResponse.getResults().get(i).getArtistName());                  //아티스트 이름
-            model.addAttribute("collectionName",jsonResponse.getResults().get(i).getCollectionName());          //앨범이름
-            model.addAttribute("trackName",jsonResponse.getResults().get(i).getTrackName());                    //음악이름
-            model.addAttribute("artistViewUrl",jsonResponse.getResults().get(i).getArtistViewUrl());            //아이튠스내 아티스트소개
-            model.addAttribute("collectionViewUrl",jsonResponse.getResults().get(i).getCollectionViewUrl());    //아이튠스내 앨범소개 url
-            model.addAttribute("artworkUrl30",jsonResponse.getResults().get(i).getArtworkUrl30());              //앨범사진 30*30
-            model.addAttribute("previewUrl",jsonResponse.getResults().get(i).getPreviewUrl());                  //아이튠즈 미리듣기 url*/
-
         }
-        System.out.println(resultList.get(0));
-        System.out.println(resultList.get(1));
-        System.out.println(resultList);
 
         model.addAttribute("resultList" , resultList);
-
         return "search/search";
     }
 
@@ -92,34 +78,50 @@ public class apiController {
                 .execute();
 
         System.out.println("lookup ==>" + lookupResponse);
+        String returnValue = lookupResponse.toString();
 
-        String returnvalue = lookupResponse.toString();
-
-        return returnvalue;
+        return returnValue;
     }
 
     @RequestMapping("/feedGenerator")
-    public String feedGenerator(){
+    public String feedGenerator(Model model){
+
+        List<Map<String, String>> resultList = new ArrayList<>(); //결과 정보 List
+
         String responseUrl = new FeedGenerator()
-                .setCountry(Country.FRANCE)
+                .setCountry(Country.SOUTH_KOREA)
                 .setMediaType(MediaType.APPLE_MUSIC)
-                .setFeedType(FeedType.HOT_ALBUMS)
+                .setFeedType(FeedType.TOP_SONGS)
                 .setResultsLimit(10)
                 .getUrl();
 
         Feed responseFeed = new FeedGenerator()
                 .setAllowExplicit(true)
-                .setCountry(Country.FRANCE)
+                .setCountry(Country.SOUTH_KOREA)
                 .setMediaType(MediaType.APPLE_MUSIC)
-                .setFeedType(FeedType.HOT_ALBUMS)
+                .setFeedType(FeedType.TOP_SONGS)
                 .setResultsLimit(10)
                 .execute();
 
-        System.out.println("responseUrl ==>" + responseUrl);
-        System.out.println("responseFeed ==>" + responseFeed);
+        for(int i =0; i < responseFeed.getResults().size(); i++ ){
 
+            Map<String,String> map = new HashMap<>();
 
-        return responseUrl;
+            map.put("ranking", "" + (i + 1));         //순위
+            map.put("artistName",responseFeed.getResults().get(i).getArtistName());         //아티스트명
+            map.put("releaseDate",responseFeed.getResults().get(i).getReleaseDate());       //발매일자
+            map.put("artworkUrl100",responseFeed.getResults().get(i).getArtworkUrl100());   //앨범자캣 이미지
+            map.put("copyRight",responseFeed.getResults().get(i).getCopyright());           //저작권
+            map.put("id",responseFeed.getResults().get(i).getId());                         //id
+            map.put("kind",responseFeed.getResults().get(i).getKind());                     //종류
+            map.put("name",responseFeed.getResults().get(i).getName());                     //음원명칭
+            map.put("url",responseFeed.getResults().get(i).getUrl());                       //앨범정보
+
+            resultList.add(i,map);
+        }
+
+        model.addAttribute("resultList", resultList);
+        System.out.println("System확인 결과" + resultList);
+        return "list/list";
     }
-
 }
